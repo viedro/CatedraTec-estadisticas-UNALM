@@ -1,0 +1,327 @@
+---
+title: "Introducción a la probabilidad"
+subtitle: "Técnicas Estadísticas y Análisis de Datos Climáticos"
+author: "Victor Eduardo Diaz Romero"
+date:  "2023/09/16"
+output:
+  html_document:
+    toc: true
+    theme: darkly
+    font: github
+    toc_float: true
+execute:
+  warning: false
+---
+
+# Probabilidad
+
+![](https://img-9gag-fun.9cache.com/photo/aM4b9xG_460s.jpg){width="250px"}
+
+## Experimento:
+
+Un experimento consiste en la observación de un fenómeno ocurrido en la naturaleza. Pueden señalarse dos tipos de experimentos, a partir de la predictibilidad del resultado:
+
+### 1. Experimento Determinista
+
+Un experimento determinista es aquel que, una vez estudiado, podemos predecirlo (es fijo), es
+decir, que sabemos lo que sucederá antes de que ocurra.  
+
+Algunos ejemplos:
+
+-   Si tiramos una piedra al aire esta caerá.
+-   Si un coche que va a 100 km/h tarda en hacer un trayecto de 1 hora, tenemos la
+certeza de que ha recorrido 100 km.
+-   Si ponemos agua en el congelador sabemos que se congelará a 0º C.
+
+Presión atmosférica teórica a diferentes alturas mediante la ecuación barométrica (Relación determinista entre la presión, altura y temperatura)
+
+```{r }
+# Datos meteorológicos
+altura <- seq(0, 10000, by = 500)  # Altura en metros
+temperatura_superficie <- 20  # Temperatura a nivel del mar en °C
+presion_superficie <- 1013.25  # Presión atmosférica a nivel del mar en hPa
+constante_lapse_rate <- 0.0065  # Tasa de cambio de temperatura con la altura
+constante_gas_seco <- 287  # Constante del gas seco en J/(kg·K)
+constante_gravedad <-9.80667 # en m/s2
+
+# Calcular la presión atmosférica en función de la altura utilizando la ecuación barométrica
+temperatura <- temperatura_superficie - constante_lapse_rate * altura
+presion <- presion_superficie * (1 - (constante_lapse_rate * altura) / (temperatura_superficie + 273.15))^(constante_gravedad / (constante_lapse_rate * constante_gas_seco))
+
+# Gráfico de la presión atmosférica en función de la altura
+library(ggplot2)
+
+df <- data.frame(altura, presion)
+
+ggplot(df, aes(x = presion, y = altura)) +
+  geom_line() +
+  labs(x = "Presión Atmosférica (hPa)", y = "Altura (m)") +
+  ggtitle("Presión Atmosférica en Función de la Altura") +
+  theme_minimal()
+
+```
+
+
+### 2.Experimento aleatorio
+
+Un experimento aleatorio es aquel cuyo resultado no se puede predecir, es decir, que
+por muchas veces que repitamos el experimento en igualdad de condiciones, no se
+conoce el resultado que se va a obtener.
+Por ejemplo:
+-   Si lanzamos dos monedas no sabemos si saldrá cara o cruz.
+-   Cuando sacamos una bola de una caja que contiene bolas de diferentes colores, no podemos predecir el color que obtendremos.
+-   Si lanzamos un dado, no podemos predecir el número que saldrá.
+
+
+
+### Espacio Muestral
+
+Un espacio muestral (Ω) es el conjunto de todos los resultados posibles de un experimento aleatorio.
+
+Ejemplos:
+
+-   Se lanzan dos monedas, entonces, el espacio muestral será Ω = {𝐶𝐶, 𝐶𝑆, 𝑆𝐶, 𝑆𝑆}, donde 𝐶 es la cara de una moneda y 𝑆, el sello.
+-   Se lanzan un dado, entonces, el espacio muestral será Ω = {1,2,3,4,5,6}
+
+#### Suceso
+
+Se conocen como eventos o sucesos a un subconjunto del espacio muestral o del resultado particular de un experimento aleatorio. Se los suele representar por las primeras letras del alfabeto.
+
+Ejemplos:
+
+-   Evento A: Que salga un número par al lanzar un dado.
+-   Evento B: Que salga sello al lanzar una moneda.
+
+
+
+#### Suceso elemental
+
+Un Suceso Elemental es cada uno de los posibles resultados de un experimento aleatorio, es decir, cada uno de los elementos que forman parte del espacio muestral.
+
+
+
+### Ejemplos:
+
+#### Lanzar un dado:
+
+```{r }
+##Experimento aleatorio: Lanzar un dado
+EA <- "Lanzar un dado"
+EA
+
+#Espacio muestral: todos los resultados del experimento aleatorio
+EM <- c(1:6)
+EM
+
+#Suceso: Sale un número par
+#%% obtiene el residuo de una división
+S1 <- EM[EM %% 2 == 0]
+S1
+
+#Suceso: Sale un número impar
+S2 <- EM[EM %% 2 != 0]
+S2
+
+#Suceso: Número mayor a 3
+S3 <- EM[EM > 3]
+S3
+
+#Suceso elemental: 
+sample(EM,1)
+
+
+```
+
+#### Obtener 4 bolas de una urna
+
+Se tiene  una urna con bolas de color de color roja, verde y azul, se quiere obtener 4.
+
+
+```{r }
+##Experimento aleatorio: 
+EA <- "Se tiene  una urna con bolas de color de color roja, verde y azul, se quiere obtener 4"
+EA
+
+#Espacio muestral: todos los resultados del experimento aleatorio
+EMU<-function(n){
+  temp<-list()
+  for (i in 1:n){
+    temp[[i]]<-c("Rojo","Azul","Verde")
+  }
+  resultado<-expand.grid(temp)
+  names(resultado)<-c(paste(rep("Bola",n),1:n,sep=""))
+  return(resultado)
+}
+EMU(4)
+
+#Suceso: 3 primeras son rojas
+S1 <-c(c("RRRA"),c("RRRR"),c("RRRV"))
+S1
+
+#Suceso elemental: 
+"RVAR"
+
+
+```
+
+
+#### Tipo de día de mañana basado en la condición del cielo
+
+```{r }
+
+# Experimento aleatorio: 
+EA <- "Tipo de día de mañana basado en la condición del cielo"
+EA
+
+# Espacio muestral: todos los posibles resultados (diferentes condiciones del cielo)
+EM <- c("Día Soleado", "Día Nublado", "Día Lluvioso", "Día Nevado")
+
+# Suceso: día con precipitación
+S1  <- c("Día Lluvioso", "Día Nevado")
+S1
+
+# Suceso elemental: 
+sample(EM, 1)
+
+```
+
+## Probabilidad Clásica
+
+Sea espacio muestral finito y supongamos que todos los eventos elementales suceden con la misma probabilidad. 
+Entonces, para cada evento A: Donde A viene a ser un suceso
+
+Regla de Laplace
+
+P(A)=Número de elementos del suceso A / Número de elementos total del espacio muestral
+
+
+```{r }
+EA <- "Lanzar un dado"
+EA
+EM <- c(1:6)
+EM
+
+S1 <- EM[EM %% 2 == 0]
+S1
+
+P.S1 <- length(S1)/length(EM)
+P.S1
+```
+
+
+```{r }
+##Experimento aleatorio: 
+EA <- "Se tiene  una urna con bolas de color de color roja, verde y azul, se quiere obtener 4"
+EA
+
+#Espacio muestral: todos los resultados del experimento aleatorio
+EMU<-function(n){
+  temp<-list()
+  for (i in 1:n){
+    temp[[i]]<-c("Rojo","Azul","Verde")
+  }
+  resultado<-expand.grid(temp)
+  names(resultado)<-c(paste(rep("Bola",n),1:n,sep=""))
+  return(resultado)
+}
+EMU(4)
+
+#Suceso: 3 primeras son rojas
+S1 <-c(c("RRRA"),c("RRRR"),c("RRRV"))
+S1
+
+P.S1 <- length(S1)/nrow(EMU(4))
+
+```
+
+
+```{r }
+
+# Experimento aleatorio: 
+EA <- "Tipo de día de mañana basado en la condición del cielo"
+EA
+
+# Espacio muestral: todos los posibles resultados (diferentes condiciones del cielo)
+EM <- c("Día Soleado", "Día Nublado", "Día Lluvioso", "Día Nevado")
+
+# Suceso: día con precipitación
+S1  <- c("Día Lluvioso", "Día Nevado")
+S1
+
+P.S1 <- length(S1)/length(EM)
+
+```
+
+
+## Axiomas de la probabilidad
+
+```{r }
+## Axiomas de la probabilidad
+
+# Probabilidad de tener al menos una tarjeta de crédito de cualquier tipo
+# P(A U B) = P(A) + P(B) - P(A ∩ B)
+
+# Probabilidad de tener una tarjeta de tipo A
+prob_A <- 0.40
+
+# Probabilidad de tener una tarjeta de tipo B
+prob_B <- 0.30
+
+# Probabilidad de tener ambas tarjetas (intersección)
+prob_interseccion_A_B <- 0.15
+
+###########P(A U B)
+# Calculamos la probabilidad de tener al menos una tarjeta de crédito de cualquier tipo
+prob_al_menos_una <- prob_A + prob_B - prob_interseccion_A_B
+prob_al_menos_una
+
+########### 
+#No puede existir una probabilidad menor que 0
+#Probabilidad siempre se encuentra entre 0 ( caso imposible) y 1 ( caso seguro)
+
+```
+
+
+## Variable aleatoria
+
+Una variable aleatoria es una función que asigna un número real a cada resultado en el espacio muestral de un experimento aleatorio. En otras palabras, es una variable que toma valores numéricos en función de los resultados de un experimento aleatorio.
+
+
+OJO: a diferencia del espacio muestral que consideraba los posibles resultados, aquí se toman todos los resultados que se dan durante un periodo.
+
+Algunos ejemplos son: número de caras obtenidas al lanzar seis veces una moneda, número de llamadas que recibe un teléfono durante una hora, tiempo de fallo de una
+componente eléctrica, número de heladas durante un año.
+
+Ejemplo:
+
+```{r }
+
+
+# Simulación de datos de temperatura mínima (ejemplo)
+set.seed(123)
+temperaturas_minimas <- rnorm(365, mean = 5, sd = 3)  # Temperaturas mínimas diarias en grados Celsius
+
+
+dx <- density(temperaturas_minimas ,na.rm=T)
+hist(temperaturas_minimas ,main="Histograma de heladas",freq=T)
+
+
+# Calcular la probabilidad de heladas (temperatura mínima < 0°C)
+dias_con_heladas <- sum(temperaturas_minimas < 0)
+total_dias <- length(temperaturas_minimas)
+probabilidad_heladas <- dias_con_heladas / total_dias
+
+
+```
+
+```{r }
+# Simulación de datos de precipitación histórica (ejemplo)
+set.seed(123)  # Establecer semilla para reproducibilidad
+precipitacion <- rnorm(365, mean = 0.1, sd = 0.5)  # Datos de precipitación en mm para un año
+
+# Calcular la probabilidad de lluvia
+dias_con_lluvia <- sum(precipitacion > 0)
+total_dias <- length(precipitacion)
+probabilidad_lluvia <- dias_con_lluvia / total_dias
+probabilidad_lluvia 
+```
