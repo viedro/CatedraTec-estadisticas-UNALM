@@ -1,5 +1,5 @@
 ##Directorio de trabajo
-setwd("C:/Users/ASUS/Desktop/catedra_2023-1/homogeneizacion")
+setwd("C:/Users/ASUS/Desktop/catedra_2023_2/Clase7")
 getwd()
 ######Creación de ficheros de entrada
 
@@ -142,7 +142,7 @@ rclimdex.start()
 
 ####################Paquete climdex.pcic
 
-#install.packages("climdex.pcic")
+#devtools::install_github("pacificclimate/climdex.pcic")
 library(climdex.pcic)
 
 #############Estableciendo fechas
@@ -263,72 +263,146 @@ csdi <- data.frame(csdi)
 
 ############
 
-############################################################
+#########################Metodo completo, calculo de todos los indices directamente
 
-funciones <- list("climdex.cdd", "climdex.prcptot", "climdex.cwd", "climdex.dtr", "climdex.fd", "climdex.gsl", "climdex.id", "climdex.r10mm","climdex.tn10p")
+
+######OJO: Aqui ponees todas tus estaciones homogeneizadas, en este caso son 7, ustedes modifiquen con sus estaciones
+
+files <- c("ho00000503.csv","ho00000541.csv","ho00000542.csv","ho00000548.csv","ho00000554.csv","ho00000635.csv","ho00000648.csv")
+estacion <- list()
+
+
+for (k in 1:length(files)){
+  estacion[[k]] <-read.csv(files[[k]],sep = ",")
+}
+
+
+#install.packages("climdex.pcic")
+library(climdex.pcic)
+#install.packages("reshape2")
+library(reshape2)
+#install.packages("htmlwidgets")
+library(htmlwidgets)
+#install.packages("plotly")
+library(plotly)
+library(ggplot2)
+#############Hasta aqui
+
+
+
+
+
+####Continua
+
+#Aqui ponemos todas las funciones disponibles de climdex.pcic
+#Son 27 y estan mas arriba solo completenlos con todos los que necesiten
+funciones <- list("climdex.cdd", "climdex.prcptot", "climdex.cwd", "climdex.dtr", "climdex.fd", "climdex.gsl", "climdex.id", "climdex.r10mm","climdex.csdi")
 
 
 for (j in 1:length(funciones)){
+  #Objeto nulo como inicializador
   index_df <- NULL
-  for (i in 1:7){ 
+  for (i in 1:length(files)){ 
     
-    
+    #Nombres de columnas
     colnames(estacion[[i]]) <- c("Año","Mes","Dia","Pp","Tmax","Tmin")
     
-    ##Columna de fechas
-    estacion[[i]]$Fecha <- as.Date(paste0(estacion[[i]]$Año,"-",estacion[[i]]$Mes,"-",estacion[[i]]$Dia))
+    ##Vector de fechas
+    Fecha <- as.Date(paste0(estacion[[i]]$Año,"-",estacion[[i]]$Mes,"-",estacion[[i]]$Dia))
     
     #install.packages("climdex.pcic")
     library(climdex.pcic)
     
-    #############Estableciendo fechas
-    Fecha <- as.character(estacion[[i]]$Fecha)
+    #############Convirtiendo a formato PCIC 
+    Fecha_pcic <- as.character(Fecha)
     
-    Fecha <- as.PCICt(Fecha, cal="365_day")
+    Fecha_pcic <- as.PCICt(Fecha_pcic, cal="365_day")
     #########Creando fichero interno de datos para climdex.pcic
     ci <- climdexInput.raw(as.numeric(estacion[[i]]$Tmax),
                            as.numeric(estacion[[i]]$Tmin),as.numeric(estacion[[i]]$Pp),
-                           Fecha,Fecha,Fecha, base.range=c(1965, 2019),
+                           Fecha_pcic,Fecha_pcic,Fecha_pcic, base.range=c(1965, 2019),
                            northern.hemisphere = F)
     
-    
+    #Aplicando do.callc (llama a una funcion como string)
     index <- do.call(funciones[[j]], list(ci))
-    index_df<- cbind(index_df,index)
-    if (i == 7){
-      colnames(index_df) <-  c("Jauja","Oyon","Picoy","Matucana","Tarma","Huayao","Pilchaca")
-      index_df = data.frame(Fecha=names(index),index_df)
-      
-      if (nrow(index_df) > 2019-1965+1){
-        index_df$Fecha <- as.Date(paste0(index_df$Fecha,"-15"))
+    
+    #Agrupando cada archivo de cada estacion
+    index_df <- cbind(index_df,index)
+    
+    index_df2 <- data.frame(index_df)
+    
+    #Si es la ultima estacion aplicar lo demas
+    if (i==length(estacion)){
+      colnames(index_df2) <-  c("Jauja","Oyon","Picoy","Matucana","Tarma","Huayao","Pilchaca")
+      ##Si los resultados son anuales
+      if (nrow(index_df2 > 55)){
+        #Fechas para el nuevo dataframe
+        Fecha <- as.Date(paste0(rownames(index_df2),"-07-16"))
+        index_df2 <- data.frame(Fecha = Fecha,index_df2)
+        
+        #Creando titulo y eje Y como mayusculas
+        Name_index <- toupper(substr(funciones[[j]],9,nchar(funciones[[j]])))
+        
+        # Crear los subplots con facet_wrap()
+        #melt agrupa todas las estaciones en una sola columna
+        graph <- ggplot(melt(index_df2, id.vars = "Fecha",variable.name = "Estacion"), aes(x = Fecha, y = value)) +
+          geom_line(aes(col=Estacion)) +
+          facet_wrap(~ Estacion, ncol = 1, scales = "free_y")+
+          
+          
+          ##########OJO aqui modifcar los colores con la cantidad de estaciones
+          ##########En este caso son 7 , si teien mas estaciones agregar mas colores
+          
+          
+          scale_color_manual(values = c("red", "blue", "green","black","violet","orange",
+                                        "cyan4"))+ ylab(toupper(substr(funciones[[j]],9,nchar(funciones[[j]]))))+ggtitle(paste0("Índice ",Name_index," 1965 - 2019"))+
+          theme_bw()+
+          theme(plot.title = element_text(hjust = 0.5,face = "bold"),
+                strip.background = element_rect(fill = "cadetblue1"),  strip.text = element_text(color = "black", face = "bold"))+
+          scale_x_date(date_labels = "%Y", date_breaks = "3 year")+
+          theme(axis.title = element_text(face = "bold"))
+        
+        ggsave(plot=graph,file=paste0(funciones[[j]],".png"), width = 9, height = 9)
+        inte <- ggplotly(graph)
+        htmlwidgets::saveWidget(inte,paste0(funciones[[j]],"_i_.html"))
+        
+        #En el caso que sean mensuales
       }else{
-        index_df$Fecha <- as.Date(paste0(index_df$Fecha,"-06-15"))
+        Fecha <- as.Date(paste0(rownames(index_df2),"-16"))
+        index_df2 <- data.frame(Fecha= Fecha,index_df2)
+        
+        Name_index <- toupper(substr(funciones[[j]],9,nchar(funciones[[j]])))
+        
+        # Crear los subplots con facet_wrap()
+        graph <- ggplot(melt(index_df2, id.vars = "Fecha",variable.name = "Estacion"), aes(x = Fecha, y = value)) +
+          geom_line(aes(col=Estacion)) +
+          facet_wrap(~ Estacion, ncol = 1, scales = "free_y")+
+          
+          ##########OJO aqui modifcar los colores con la cantidad de estaciones
+          ##########En este caso son 7 , si teien mas estaciones agregar mas colores
+          
+          scale_color_manual(values = c("red", "blue", "green","black","violet","orange",
+                                        "cyan4"))+ ylab(toupper(substr(funciones[[j]],9,nchar(funciones[[j]]))))+ggtitle(paste0("Índice ",Name_index," 1965 - 2019"))+
+          theme_bw()+
+          theme(plot.title = element_text(hjust = 0.5,face = "bold"),
+                strip.background = element_rect(fill = "cadetblue1"),  strip.text = element_text(color = "black", face = "bold"))+
+          scale_x_date(date_labels = "%Y", date_breaks = "3 year")+
+          theme(axis.title = element_text(face = "bold"))
+        
+        ggsave(plot=graph,file=paste0(funciones[[j]],".png"), width = 9, height = 9)
+        inte <- ggplotly(graph)
+        htmlwidgets::saveWidget(inte,paste0(funciones[[j]],"_i_.html"))
       }
-    } 
+      
+    }
     
     
-    write.table(index_df,file =paste0(funciones[j],".csv"),sep = ",",row.names=F)
+    write.csv(index_df2 , file = paste0(funciones[[j]],".csv"), row.names = FALSE)
+    
   }
-  
-  ####Generando todas las graficas y exportandolas
-  
-  
-  
-  
-  
-  
-  #ggplot(aes(x=))
-  
-}
+} 
 
 
-ggplot(data=index_df,aes(x=Fecha))+
-  geom_line(aes(y=Jauja))
-
-
-library(reshape2)
-ggplotly(ggplot(melt(index_df, id.vars = "Fecha"), aes(x = Fecha, y = value,color=variable)) +
-           geom_line() +
-           facet_wrap(~ variable,ncol = 1))+xlab("")
 
 
 
