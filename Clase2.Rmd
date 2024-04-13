@@ -38,26 +38,27 @@ Presión atmosférica teórica a diferentes alturas mediante la ecuación barom�
 ```{r }
 # Datos meteorológicos
 altura <- seq(0, 10000, by = 500)  # Altura en metros
-temperatura_superficie <- 20  # Temperatura a nivel del mar en °C
+temperatura_superficie <- 15  # Temperatura a nivel del mar en °C
 presion_superficie <- 1013.25  # Presión atmosférica a nivel del mar en hPa
 constante_lapse_rate <- 0.0065  # Tasa de cambio de temperatura con la altura
-constante_gas_seco <- 287  # Constante del gas seco en J/(kg·K)
-constante_gravedad <-9.80667 # en m/s2
+constante_gas_seco <- 287.06  # Constante del gas seco en J/(kg·K)
+constante_gravedad <- 9.80667 # en m/s2
 
 # Calcular la presión atmosférica en función de la altura utilizando la ecuación barométrica
 temperatura <- temperatura_superficie - constante_lapse_rate * altura
 presion <- presion_superficie * (1 - (constante_lapse_rate * altura) / (temperatura_superficie + 273.15))^(constante_gravedad / (constante_lapse_rate * constante_gas_seco))
 
 # Gráfico de la presión atmosférica en función de la altura
+#install.packages("ggplot2")
 library(ggplot2)
 
 df <- data.frame(altura, presion)
-
+df
 ggplot(df, aes(x = presion, y = altura)) +
   geom_line() +
   labs(x = "Presión Atmosférica (hPa)", y = "Altura (m)") +
   ggtitle("Presión Atmosférica en Función de la Altura") +
-  theme_minimal()
+  theme_bw()
 
 ```
 
@@ -284,7 +285,8 @@ prob_al_menos_una
 
 ## Variable aleatoria
 
-Una variable aleatoria es una función que asigna un número real a cada resultado en el espacio muestral de un experimento aleatorio. En otras palabras, es una variable que toma valores numéricos en función de los resultados de un experimento aleatorio.
+Una variable aleatoria es una función que asigna un número real a cada resultado en el espacio muestral de un experimento aleatorio. En otras palabras, es una variable que toma valores numéricos en función de los resultados de un experimento aleatorio
+
 
 
 OJO: a diferencia del espacio muestral que consideraba los posibles resultados, aquí se toman todos los resultados que se dan durante un periodo.
@@ -300,10 +302,14 @@ Ejemplo:
 # Simulación de datos de temperatura mínima (ejemplo)
 set.seed(123)
 temperaturas_minimas <- rnorm(365, mean = 5, sd = 3)  # Temperaturas mínimas diarias en grados Celsius
-
+length(temperaturas_minimas)
 
 dx <- density(temperaturas_minimas ,na.rm=T)
 hist(temperaturas_minimas ,main="Histograma de heladas",freq=T)
+
+ggplot(data.frame(temperaturas_minimas) , aes(x = temperaturas_minimas)) +
+  geom_histogram(aes(y = ..density..),fill="red",bins=10)+
+  geom_density(col="blue")
 
 
 # Calcular la probabilidad de heladas (temperatura mínima < 0°C)
