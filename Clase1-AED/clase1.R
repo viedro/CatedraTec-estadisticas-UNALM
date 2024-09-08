@@ -1,5 +1,5 @@
 #Establecemosnuestro directorio de trabajo
-setwd("C:/Users/ASUS/Desktop/Catedra 2024_1/Clase1-AED")
+setwd("D:/Catedra_2024-2/Clase1-AED")
 
 #Importamos nuestro archivo de estación
 data <- read.table("ho00000503.txt",na.strings = -99.9)
@@ -78,17 +78,22 @@ sd(data$Pp,na.rm=T)^2
 summary(data)
 
 #¿Quieres aun más estadísticos?
-#install.packages("pastecs")
-library(pastecs)
-stat.desc(data)
-
 
 #install.packages("hydroTSM")
 library(hydroTSM)
-smry(data[,4:6])
 
+smry(data[,4:6])
 write.table(smry(data[,4:6]),"est_503.csv",row.names = F)
 
+#cv = sd / mean
+#skewness (sesgo o asimetria) -> medida de la simetría de la distribución de los datos
+#+ = distribución tiene una cola más larga hacia la derecha (asimetría positiva
+#- = cola más larga hacia la izquierda (asimetría negativa)
+#~0 = distribucion mas simetrica (normal)
+
+#kurtosis -> describe las características de las colas de una distribución en relación con una distribución normal
+#+ Kurtosis: Los datos tienen más valores extremos
+#- Kurtosis: Los datoos estan mas repartidos
 
 #######Graficado
 
@@ -122,7 +127,7 @@ g2 <- ggplot(data,aes(x=Fecha,y=Tmax))+
   geom_line(col="red")+
   theme(plot.title = element_text(hjust = 0.5,face = "bold"))+
   xlab("Fecha")+ylab("Temperatura máx (°C)")+theme_bw()+ggtitle("Temperatura Máxima Estación ........")
-  
+
 g3 <- ggplot(data,aes(x=Fecha,y=Tmin))+
   geom_line(col="blue")+
   theme(plot.title = element_text(hjust = 0.5,face = "bold"))+
@@ -136,8 +141,10 @@ ggplotly(g1)
 ggplotly(g2)
 ggplotly(g3) 
 
-#install.packages("tidyverse")
-library(tidyverse)
+#install.packages("tidyr")
+#install.packages("dplyr")
+library(tidyr)
+library(dplyr)
 #install.packages("reshape2")
 library(reshape2)
 # Asegúrate de cargar los datos primero
@@ -168,6 +175,7 @@ grafico
 
 #Exportar
 ggsave(plot=grafico,file="serie_est.png", width = 9, height = 8)
+
 
 
 
@@ -211,9 +219,6 @@ data_month <- data.frame(Fecha = as.Date(index(pp_month)),Pp =coredata(pp_month)
 
 #M?todo 2 librer?a dplyr
 
-#install.packages("tidyverse")
-library(tidyverse)
-
 prom_m <- data %>% group_by(Año,Mes) %>%
   summarise(Tmax = mean_na(Tmax), Tmin = mean_na(Tmin),Pp=sum_na(Pp))
 
@@ -225,7 +230,6 @@ head(prom_m,15)
 
 library(reshape2)
 ##################Box plot
-library(RColorBrewer)
 prom_m$Mes <- rep(c("Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"),2019-1965+1) 
 prom_m$Mes <- factor(prom_m$Mes,levels = c("Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"))
 
@@ -239,8 +243,8 @@ boxplot <- ggplot(data = data_box, aes(x = Mes, y = value,fill=Mes)) +
   facet_wrap(~ variable, scales = "free_y", nrow = 3) +  # Separar uno debajo del otro
   theme_bw() +
   theme(legend.position = "none")+
-  theme(plot.title = element_text(hjust = 0.5,face = "bold"),  strip.text = element_text(color = "black", face = "bold"))+
-  theme(axis.title = element_text(face = "bold"))+ggtitle("Diagrama de cajas mensual Estación ..............")+scale_fill_manual(values=brewer.pal(n=12,name="Set3"))+
+  theme(plot.title = element_text(hjust = 0.5,face = "bold"),  strip.text = element_text(color = "black", face = "bold"),strip.background = element_rect(fill="white",color=NA))+
+  theme(axis.title = element_text(face = "bold"))+ggtitle("Diagrama de cajas mensual Estación ..............")+
   stat_summary(fun=mean,geom="point",shape=18,color="red",size=2)
 
 
