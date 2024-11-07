@@ -2,11 +2,41 @@
 ##################Validación de GCM
 
 #Directorio de trabajo
-setwd("C:/Users/ASUS/Desktop/Catedra_2024_1/Clase5-Validacion")
+setwd("D:/Catedra_2024-2/Clase5-Validacion")
 getwd()
 
+##Lectura de series de climatol
+pre <- read.table("precip_diario_complete.csv",sep=",",header=T)
+tmax <- read.table("tmax_diario_complete.csv",sep=",",header=T)
+tmin <- read.table("tmin_diario_complete.csv",sep=",",header=T)
+
+#View(tmax)
+##Extraccion de año, mes y dia
+
+year <- as.numeric(format(as.Date(pre$Date),'%Y'))
+month <- as.numeric(format(as.Date(pre$Date),'%m'))
+day <- as.numeric(format(as.Date(pre$Date),'%d'))
+
+#Extrayendo fechas de los dataframes
+pre <- pre[,-1]
+tmax <- tmax[,-1]
+tmin <- tmin[,-1]
+
+
+##Generando fichero por estacion
+
+archivo <- substr(list.files(pattern = "^ho000.*\\.txt$"),1,10)
+
+estacion<- list()
+for (i in 1:length(archivo)){
+  estacion[[i]] <- data.frame(year,month,day,Pp=pre[,i],Tmax=tmax[,i],Tmin=tmin[,i])
+  #Exportando fichero
+  write.table(estacion[[i]],file =paste0(archivo[i],".csv"),sep = ",",row.names=F)
+}
+
+
 #Lista de archivos de estaciones (resultado de homogeneización)
-#Nota: este archivo sale de la primera parte del codigo de calculo de indices extremos
+
 files <- list.files(pattern = "^ho0.*\\.csv$")
 
 
@@ -82,7 +112,7 @@ library(dplyr)
 
 tabla2 <- data.frame(ini =rep(0,length(files)))
 j=1
-i=2
+i=1
 ####modelos
 for (j in 1:length(archivos)){
   tabla <- NULL
@@ -99,11 +129,11 @@ for (j in 1:length(archivos)){
     data$date <- as.Date(paste0(data$Year,"-",data$Month,"-",data$Day))
     
     #Filtro rango 
-    data <- data[data$date >= as.Date("1981-01-01") & data$date <= as.Date("2005-12-31"),]
+    data <- data[data$date >= as.Date("1981-01-01") & data$date <= as.Date("1995-12-31"),]
     tail(data)
     length(data$pp)
     model <- ReadNetCDF(archivos[j],subset=list(lat=meta$LATITUDE[i],lon=meta$LONGITUDE[i]))
-    
+    model <- model[model$time >= as.Date("1981-01-01") & model$time <= as.Date("1995-12-31"),]
     
     if (var== "pp"){
       data <- data.frame(Date=data$date,var_obs=data$pp,var_model= model$pr)
@@ -201,12 +231,12 @@ for (j in 1:length(archivos)){
     data$date <- as.Date(paste0(data$Year,"-",data$Month,"-",1))
     
     #Filtro rango 
-    data <- data[data$date >= as.Date("1981-01-01") & data$date <= as.Date("2005-12-31"),]
-    
-    
-    
-   
+    data <- data[data$date >= as.Date("1981-01-01") & data$date <= as.Date("1995-12-31"),]
+    tail(data)
+    length(data$pp)
     model <- ReadNetCDF(archivos[j],subset=list(lat=meta$LATITUDE[i],lon=meta$LONGITUDE[i]))
+    model <- model[model$time >= as.Date("1981-01-01") & model$time <= as.Date("1995-12-31"),]
+    
     model$Year <- as.numeric(format(model$time,"%Y"))
     model$Month <- as.numeric(format(model$time,"%m"))
     
@@ -323,4 +353,32 @@ ggplot()+
   scale_x_continuous(
     name = "Longitud",
     labels = function(x) paste0(abs(x), "°"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
