@@ -61,7 +61,7 @@ library(ggplot2)
 
 #pr_day_CESM2_historical_19700101-20141231.nc
 ##########escogemos la variable a trabjar
-#var="pp"
+var="pp"
 #var="tmin"
 #var="tmax"
 
@@ -81,7 +81,8 @@ library(dplyr)
 
 
 tabla2 <- data.frame(ini =rep(0,length(files)))
-
+j=1
+i=2
 ####modelos
 for (j in 1:length(archivos)){
   tabla <- NULL
@@ -143,6 +144,8 @@ for (j in 1:length(archivos)){
     plotgrid.args = list(ncol=2))
   
   ggsave(plot=graph,file=paste0(var,"_d_",name_model[j],".png"), width = 12, height = 10)
+  
+  
   
   tabla2 <- cbind(tabla2,tabla) 
 }
@@ -287,4 +290,37 @@ write.csv(final_table, file = paste0(var,"_mes.csv"), row.names = FALSE)
 
 
 
+############¿Y si quiero graficar los modelos?
+
+
+library(terra)
+
+raster <- rast("SENAMHI_pp_d12k_ACCESS1-0_hist_scal.nc")
+raster
+
+plot(raster[[1:12]])
+
+library(rasterVis)
+library(RColorBrewer)
+
+levelplot(raster[[1:2]],cuts=80)
+
+library(tidyterra)
+
+#Acumulados mensuales por año
+raster_m <- tapp(raster,"yearmonths",sum,na.rm=T)
+raster_m
+
+raster_m <- tapp(raster_m,"month",mean,na.rm=T)
+
+
+ggplot()+
+  geom_spatraster(data=raster_m)+
+  facet_wrap(~lyr)+
+  theme_minimal()+ scale_fill_whitebox_c(n.breaks=10)+
+  theme(legend.key.height = unit(1, "null"))+
+  scale_x_continuous()+
+  scale_x_continuous(
+    name = "Longitud",
+    labels = function(x) paste0(abs(x), "°"))
 
